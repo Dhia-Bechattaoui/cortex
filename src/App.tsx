@@ -1,8 +1,12 @@
+import { useState } from "react";
 import { MemoryGraph } from "./components/MemoryGraph";
+import { MemoryTimeline } from "./components/MemoryTimeline";
 
 function App() {
+  const [isTimelineOpen, setIsTimelineOpen] = useState(false);
+
   return (
-    <div className="flex h-screen bg-gray-950 text-gray-100 font-sans overflow-hidden">
+    <div className="flex h-screen bg-gray-950 text-gray-100 font-sans overflow-hidden relative">
       {/* Sidebar */}
       <aside className="w-64 bg-gray-900 border-r border-gray-800 flex flex-col z-10 shadow-2xl relative">
         <div className="p-6 border-b border-gray-800 bg-gray-900/50 backdrop-blur-sm">
@@ -32,16 +36,26 @@ function App() {
 
       {/* Main Canvas Area */}
       <main className="flex-1 relative">
-         {/* Absolute overlay elements can go here (e.g. search bar) */}
-         <div className="absolute top-4 left-6 z-10">
+         <div className="absolute top-4 left-6 z-10 flex gap-3">
            <div className="bg-gray-900/80 backdrop-blur-md border border-gray-800 rounded-full px-4 py-2 shadow-lg flex items-center gap-2">
              <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
              <input type="text" placeholder="Search memories..." className="bg-transparent border-none text-sm text-gray-200 focus:outline-none w-48 placeholder-gray-500" />
            </div>
+           
+           <button 
+             onClick={() => setIsTimelineOpen(true)}
+             className="bg-gray-900/80 backdrop-blur-md border border-gray-800 rounded-full px-4 py-2 shadow-lg hover:bg-gray-800 transition-colors flex items-center gap-2 text-sm text-gray-200 font-medium"
+           >
+             <svg className="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+             View Timeline
+           </button>
          </div>
          
          <MemoryGraph />
       </main>
+
+      {/* Slide-out Timeline */}
+      <MemoryTimeline isOpen={isTimelineOpen} onClose={() => setIsTimelineOpen(false)} />
     </div>
   );
 }
