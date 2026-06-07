@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 import {
   ReactFlow,
   MiniMap,
@@ -9,45 +9,70 @@ import {
   addEdge,
   Connection,
   Edge,
+  Node,
   BackgroundVariant,
+  useReactFlow,
+  ReactFlowProvider
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { FactNode } from './nodes/FactNode';
+import { UserNode } from './nodes/UserNode';
+import { ThoughtNode } from './nodes/ThoughtNode';
+import { ActionNode } from './nodes/ActionNode';
 
 const nodeTypes = {
   fact: FactNode,
+  user: UserNode,
+  thought: ThoughtNode,
+  action: ActionNode,
 };
 
-const initialNodes = [
-  { id: '1', type: 'fact', position: { x: 250, y: 100 }, data: { label: 'Alice', category: 'User Entity' } },
-  { id: '2', type: 'fact', position: { x: 100, y: 250 }, data: { label: 'Likes Coffee', category: 'Preference' } },
-  { id: '3', type: 'fact', position: { x: 400, y: 250 }, data: { label: 'Lives in New York', category: 'Location' } },
-  { id: '4', type: 'fact', position: { x: 250, y: 400 }, data: { label: 'Software Engineer', category: 'Occupation' } },
-];
+interface MemoryGraphProps {
+  nodesData: Node[];
+  edgesData: Edge[];
+  onNodeClick?: (node: Node) => void;
+  focusNodeId?: string | null;
+}
 
-const initialEdges = [
-  { id: 'e1-2', source: '1', target: '2', animated: true, style: { stroke: '#8b5cf6', strokeWidth: 2 } },
-  { id: 'e1-3', source: '1', target: '3', animated: true, style: { stroke: '#3b82f6', strokeWidth: 2 } },
-  { id: 'e1-4', source: '1', target: '4', animated: true, style: { stroke: '#10b981', strokeWidth: 2 } },
-];
+function MemoryGraphInner({ nodesData, edgesData, onNodeClick, focusNodeId }: MemoryGraphProps) {
+  const [nodes, setNodes, onNodesChange] = useNodesState(nodesData);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(edgesData);
+  const { setCenter } = useReactFlow();
 
-export function MemoryGraph() {
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+  // Sync state when props change
+  useEffect(() => {
+    setNodes(nodesData);
+    setEdges(edgesData);
+  }, [nodesData, edgesData, setNodes, setEdges]);
+
+  // Focus node logic
+  useEffect(() => {
+    if (focusNodeId) {
+      const node = nodes.find(n => n.id === focusNodeId);
+      if (node) {
+        setCenter(node.position.x + 140, node.position.y + 50, { zoom: 1.2, duration: 800 });
+      }
+    }
+  }, [focusNodeId, nodes, setCenter]);
 
   const onConnect = useCallback(
     (params: Connection | Edge) => setEdges((eds) => addEdge(params, eds)),
     [setEdges],
   );
 
+  const handleNodeClick = useCallback((event: React.MouseEvent, node: Node) => {
+    if (onNodeClick) onNodeClick(node);
+  }, [onNodeClick]);
+
   return (
-    <div style={{ width: '100%', height: '100%' }}>
+    <div className="absolute inset-0">
       <ReactFlow
         nodes={nodes}
         edges={edges}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
+        onNodeClick={handleNodeClick}
         nodeTypes={nodeTypes}
         fitView
         colorMode="dark"
@@ -63,5 +88,13 @@ export function MemoryGraph() {
         <Background variant={BackgroundVariant.Dots} gap={16} size={1} color="#374151" />
       </ReactFlow>
     </div>
+  );
+}
+
+export function MemoryGraph(props: MemoryGraphProps) {
+  return (
+    <ReactFlowProvider>
+      <MemoryGraphInner {...props} />
+    </ReactFlowProvider>
   );
 }

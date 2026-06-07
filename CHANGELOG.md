@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0] - 2026-06-07
+### Added
+- **Real Data Integration:** Implemented a Tauri Rust IPC command to scan and parse local Gemini conversation JSONL logs.
+- **Semantic Visual Flow:** Built an advanced parser to categorize steps into User Requests, Agent Thoughts, and System Actions.
+- **Rich Nodes:** Created new Custom Nodes (`UserNode`, `ThoughtNode`, `ActionNode`) to visually map the conversation anatomy.
+- **Detail Inspector:** Built a slide-in right panel to view the full un-truncated text of any selected graph node, solving React Flow performance lag.
+- **Timeline Navigation:** Added interactivity to the Timeline so clicking an event smoothly pans and zooms the React Flow canvas to the corresponding node.
+
 ## [0.5.0] - 2026-06-07
 ### Added
 - Added custom premium dark-mode scrollbars across the application.
@@ -38,6 +46,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Initial project structure (`PLAN.md`, `README.md`, `CHANGELOG.md`).
 - `.agents` configuration directory for rules and workflows.
 
+[0.6.0]: https://github.com/dhia/cortex/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/dhia/cortex/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/dhia/cortex/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/dhia/cortex/compare/v0.2.0...v0.3.0
