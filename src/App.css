@@ -7,3 +7,23 @@
 body {
   @apply bg-gray-950 text-gray-100 font-sans overflow-hidden antialiased;
 }
+
+/* Premium Dark Mode Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(17, 24, 39, 0.2); 
+  border-radius: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(55, 65, 81, 0.6); 
+  border-radius: 8px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(75, 85, 99, 0.9); 
+}
