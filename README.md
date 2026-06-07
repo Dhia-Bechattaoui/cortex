@@ -1,12 +1,7 @@
-# Cortex
+# Tauri + React + Typescript
 
-Cortex is a native desktop application that acts as a "Visual Cortex" for your local AI agents. It provides a beautiful, node-based graph view of your AI's internal memory, context, and chat logs.
+This template should help get you started developing with Tauri, React and Typescript in Vite.
 
-## Features (Planned)
-- **Memory Timeline:** A chronological feed of what the AI learned.
-- **Graph View:** Visually explore interconnected facts.
-- **Fact Editor:** Manually edit or delete memories.
-- **Local-First Security:** Never sends data to the cloud.
+## Recommended IDE Setup
 
-## Development Setup
-*Instructions coming soon.*
+- [VS Code](https://code.visualstudio.com/) + [Tauri](https://marketplace.visualstudio.com/items?itemName=tauri-apps.tauri-vscode) + [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer)
