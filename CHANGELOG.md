@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0] - 2026-06-08
+### Added
+- **Graph Architecture Overhaul:** Restructured the Memory Graph to group AI Thoughts and Tool Actions as hierarchical child branches underneath their parent User Request nodes.
+- **Performance Optimization:** Implemented interactive Expand/Collapse logic in the graph. AI actions are now hidden by default to ensure instant rendering, and can be toggled by clicking a User node.
+- **Universal Tag Parser:** Upgraded the `DetailPanel` to dynamically parse and strip *all* XML tags (e.g., `<USER_SETTINGS_CHANGE>`, `<EPHEMERAL_MESSAGE>`), rendering them into polished, specialized UI cards.
+- **Detail Panel Polish:** Redesigned the User Prompt as a glowing "Hero" chat bubble, and wrote a strict parser to format System Environment Metadata into beautiful UI chips.
+- **Timeline Optimization:** The Timeline sidebar now exclusively acts as a high-level chat history (showing only User Prompts) and strips out raw XML tags from the preview snippets.
+- **UI State Sync:** Fixed overlapping sidebars; opening the Timeline automatically closes the Detail Panel, and clicking the graph background dismisses all active panels.
+
 ## [0.6.0] - 2026-06-07
 ### Added
 - **Real Data Integration:** Implemented a Tauri Rust IPC command to scan and parse local Gemini conversation JSONL logs.
@@ -46,6 +55,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Initial project structure (`PLAN.md`, `README.md`, `CHANGELOG.md`).
 - `.agents` configuration directory for rules and workflows.
 
+[0.7.0]: https://github.com/dhia/cortex/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/dhia/cortex/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/dhia/cortex/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/dhia/cortex/compare/v0.3.0...v0.4.0

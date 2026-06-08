@@ -5,126 +5,152 @@ export function parseConversation(transcriptStr: string) {
     const nodes: Node[] = [];
     const edges: Edge[] = [];
     const timeline: any[] = [];
-    
-    let yOffset = 50;
-    const xCenter = 400; // Center spine for the conversation flow
 
-    let lastMainNodeId: string | null = null;
+    const xCenter = 400; // Center spine for the conversation flow
+    const xChildOffset = 450; // Distance to the right for child nodes
+
+    let lastUserNodeId: string | null = null;
     let stepCount = 0;
-    
+
+    // Layout trackers
+    let blockStartY = 50;
+    let childY = 50;
+
     lines.forEach((line, i) => {
         if (!line) return;
         try {
             const data = JSON.parse(line);
             stepCount++;
-            
-            // Build Timeline Event
-            let desc = data.content ? data.content.substring(0, 100) : "";
-            if (!desc && data.tool_calls && data.tool_calls.length > 0) {
-                desc = `Used tool: ${data.tool_calls[0].name}`;
-            } else if (!desc) {
-                desc = "System execution";
+
+            // Build Timeline Event ONLY for User Requests
+            if (data.type === 'USER_INPUT') {
+                let cleanContent = data.content ? data.content.replace(/<[^>]+>/g, '').trim() : "";
+                let desc = cleanContent ? cleanContent.substring(0, 100) : "";
+
+                timeline.push({
+                    id: i.toString(),
+                    time: data.created_at ? new Date(data.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : `Step ${data.step_index || stepCount}`,
+                    action: "User Request",
+                    description: desc + (desc.length >= 100 ? "..." : ""),
+                    iconColor: "bg-green-500"
+                });
             }
-            timeline.push({
-                id: i.toString(),
-                time: data.created_at ? new Date(data.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : `Step ${data.step_index || stepCount}`,
-                action: data.type ? data.type.replace(/_/g, ' ') : "Event",
-                description: desc + (desc.length >= 100 ? "..." : ""),
-                iconColor: data.source === "USER_EXPLICIT" ? "bg-green-500" : (data.source === "MODEL" ? "bg-purple-500" : "bg-blue-500")
-            });
-            
+
             // Build Visual Nodes
             const nodeId = `node-${i}`;
             let nodeType = 'fact';
             let contentStr = data.content || '';
             let labelStr = data.type || 'Event';
-            let xPos = xCenter;
-            let isMainTimeline = false;
-            
+            let isUserRequest = false;
+
             if (data.type === 'USER_INPUT') {
                 nodeType = 'user';
                 labelStr = 'User Request';
-                isMainTimeline = true;
+                isUserRequest = true;
             } else if (data.source === 'MODEL' || data.type === 'PLANNER_RESPONSE') {
                 nodeType = 'thought';
                 labelStr = 'Agent Thought Process';
-                isMainTimeline = true;
             } else if (data.source === 'SYSTEM' || data.type === 'TOOL_CALL') {
                 nodeType = 'action';
                 labelStr = `System: ${data.type}`;
-                xPos = xCenter + 450; // Offset actions to the right
-                // If content is huge JSON, format it
                 if (contentStr.startsWith('{') || contentStr.startsWith('[')) {
-                    try { contentStr = JSON.stringify(JSON.parse(contentStr), null, 2); } catch(e){}
+                    try { contentStr = JSON.stringify(JSON.parse(contentStr), null, 2); } catch (e) { }
                 }
             } else if (data.type === 'EPHEMERAL_MESSAGE') {
                 nodeType = 'action';
                 labelStr = 'Ephemeral Constraint';
-                xPos = xCenter - 450; // Offset ephemeral to the left
             }
 
-            // Create primary node
-            nodes.push({
-                id: nodeId,
-                type: nodeType,
-                position: { x: xPos, y: yOffset },
-                data: {
-                    label: labelStr,
-                    content: contentStr
-                }
-            });
-            
-            // Link node
-            if (lastMainNodeId) {
-                edges.push({
-                    id: `e-${lastMainNodeId}-${nodeId}`,
-                    source: lastMainNodeId,
-                    target: nodeId,
-                    animated: true,
-                    style: { stroke: nodeType === 'user' ? '#22c55e' : (nodeType === 'thought' ? '#a855f7' : '#3b82f6'), strokeWidth: 2 }
+            if (isUserRequest) {
+                // Determine start Y for this new block. 
+                // It must be below the lowest child of the PREVIOUS user block.
+                blockStartY = Math.max(blockStartY + 200, childY + 150);
+                if (i === 0) blockStartY = 50; // Reset for first node
+
+                // Reset childY to start slightly below the new user node
+                childY = blockStartY + 80;
+
+                nodes.push({
+                    id: nodeId,
+                    type: nodeType,
+                    position: { x: xCenter, y: blockStartY },
+                    data: { label: labelStr, content: contentStr }
                 });
-            }
-            
-            // Increment Layout
-            if (isMainTimeline) {
-                lastMainNodeId = nodeId;
-                yOffset += 180; // Fixed vertical spacing for minimal nodes
-            } else {
-                yOffset += 120;
-            }
-            
-            // Process Tool Calls branching off this node
-            if (data.tool_calls && Array.isArray(data.tool_calls)) {
-                data.tool_calls.forEach((tool: any, tIndex: number) => {
-                    const toolNodeId = `tool-${i}-${tIndex}`;
-                    const toolArgs = typeof tool.arguments === 'string' ? tool.arguments : JSON.stringify(tool.arguments, null, 2);
-                    
-                    nodes.push({
-                        id: toolNodeId,
-                        type: 'action',
-                        position: { x: xCenter + 450, y: yOffset },
-                        data: {
-                            label: `Tool Executed: ${tool.name}`,
-                            content: toolArgs
-                        }
-                    });
-                    
+
+                // Connect user spine
+                if (lastUserNodeId) {
                     edges.push({
-                        id: `e-${nodeId}-${toolNodeId}`,
-                        source: nodeId,
-                        target: toolNodeId,
-                        animated: true,
-                        style: { stroke: '#3b82f6', strokeWidth: 2, strokeDasharray: '5,5' }
+                        id: `e-${lastUserNodeId}-${nodeId}`,
+                        source: lastUserNodeId,
+                        target: nodeId,
+                        animated: false, // User spine is solid
+                        style: { stroke: '#22c55e', strokeWidth: 3 }
                     });
-                    
-                    yOffset += 120;
+                }
+
+                lastUserNodeId = nodeId;
+            } else {
+                // This is a child node (Thought, Action, Ephemeral, etc.)
+                // Position it to the right and increment childY
+                nodes.push({
+                    id: nodeId,
+                    type: nodeType,
+                    hidden: true, // Hidden by default for performance
+                    position: { x: xCenter + xChildOffset, y: childY },
+                    data: { label: labelStr, content: contentStr, parentUserNodeId: lastUserNodeId }
                 });
+
+                // Connect to parent User Node
+                if (lastUserNodeId) {
+                    edges.push({
+                        id: `e-${lastUserNodeId}-${nodeId}`,
+                        source: lastUserNodeId,
+                        target: nodeId,
+                        hidden: true, // Hidden by default
+                        animated: true,
+                        style: { stroke: nodeType === 'thought' ? '#a855f7' : '#3b82f6', strokeWidth: 2, opacity: 0.7 }
+                    });
+                }
+
+                // Process any nested tool calls (branching from THIS specific child node)
+                let currentNestedY = childY;
+                if (data.tool_calls && Array.isArray(data.tool_calls)) {
+                    data.tool_calls.forEach((tool: any, tIndex: number) => {
+                        currentNestedY += 120;
+                        const toolNodeId = `tool-${i}-${tIndex}`;
+                        const toolArgs = typeof tool.arguments === 'string' ? tool.arguments : JSON.stringify(tool.arguments, null, 2);
+
+                        nodes.push({
+                            id: toolNodeId,
+                            type: 'action',
+                            hidden: true, // Hidden by default
+                            position: { x: xCenter + xChildOffset + 450, y: currentNestedY },
+                            data: {
+                                label: `Tool Executed: ${tool.name}`,
+                                content: toolArgs,
+                                parentUserNodeId: lastUserNodeId // Also track parent user node
+                            }
+                        });
+
+                        edges.push({
+                            id: `e-${nodeId}-${toolNodeId}`,
+                            source: nodeId,
+                            target: toolNodeId,
+                            hidden: true, // Hidden by default
+                            animated: true,
+                            style: { stroke: '#3b82f6', strokeWidth: 2, strokeDasharray: '5,5' }
+                        });
+                    });
+                }
+
+                // Update childY to account for this node AND any nested tool calls we just rendered
+                childY = currentNestedY + 140;
             }
 
         } catch (e) {
             // Ignore parse errors for malformed lines
         }
     });
-    
+
     return { nodes, edges, timeline };
 }

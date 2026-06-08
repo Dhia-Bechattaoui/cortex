@@ -1,7 +1,8 @@
 import { Handle, Position } from '@xyflow/react';
 
 export function ThoughtNode({ data }: { data: any }) {
-  const snippet = data.content ? data.content.substring(0, 50).replace(/\n/g, ' ') + (data.content.length > 50 ? "..." : "") : "";
+  const cleanContent = data.content ? data.content.replace(/<[^>]+>/g, '').trim() : "";
+  const snippet = cleanContent ? cleanContent.substring(0, 50).replace(/\n/g, ' ') + (cleanContent.length > 50 ? "..." : "") : "";
   return (
     <div className="bg-gray-900 border border-purple-500/50 shadow-[0_0_15px_rgba(168,85,247,0.15)] rounded-xl w-[280px] hover:border-purple-400 transition-colors cursor-pointer">
       <div className="bg-purple-500/10 px-4 py-2 border-b border-gray-800 rounded-t-xl flex items-center gap-2">

@@ -94,7 +94,10 @@ function App() {
            </div>
            
            <button 
-             onClick={() => setIsTimelineOpen(true)}
+             onClick={() => {
+               setIsTimelineOpen(true);
+               setSelectedNodeData(null); // Close detail panel so it doesn't overlap
+             }}
              className="bg-gray-900/80 backdrop-blur-md border border-gray-800 rounded-full px-4 py-2 shadow-lg hover:bg-gray-800 transition-colors flex items-center gap-2 text-sm text-gray-200 font-medium"
            >
              <svg className="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
@@ -106,7 +109,14 @@ function App() {
          {nodes.length > 0 && <MemoryGraph 
             nodesData={nodes} 
             edgesData={edges} 
-            onNodeClick={(n) => setSelectedNodeData(n.data)} 
+            onNodeClick={(n) => {
+              setSelectedNodeData(n.data);
+              setIsTimelineOpen(false); // Close timeline when viewing node details
+            }} 
+            onPaneClick={() => {
+              setSelectedNodeData(null);
+              setIsTimelineOpen(false); // Close timeline and details when clicking outside
+            }}
             focusNodeId={focusNodeId}
          />}
       </main>

@@ -31,10 +31,11 @@ interface MemoryGraphProps {
   nodesData: Node[];
   edgesData: Edge[];
   onNodeClick?: (node: Node) => void;
+  onPaneClick?: () => void;
   focusNodeId?: string | null;
 }
 
-function MemoryGraphInner({ nodesData, edgesData, onNodeClick, focusNodeId }: MemoryGraphProps) {
+function MemoryGraphInner({ nodesData, edgesData, onNodeClick, onPaneClick, focusNodeId }: MemoryGraphProps) {
   const [nodes, setNodes, onNodesChange] = useNodesState(nodesData);
   const [edges, setEdges, onEdgesChange] = useEdgesState(edgesData);
   const { setCenter } = useReactFlow();
@@ -62,7 +63,27 @@ function MemoryGraphInner({ nodesData, edgesData, onNodeClick, focusNodeId }: Me
 
   const handleNodeClick = useCallback((event: React.MouseEvent, node: Node) => {
     if (onNodeClick) onNodeClick(node);
-  }, [onNodeClick]);
+
+    if (node.type === 'user') {
+      const childNodeIds = new Set(nodes.filter(n => n.data?.parentUserNodeId === node.id).map(n => n.id));
+      if (childNodeIds.size === 0) return; // No children to toggle
+
+      const isFirstChildHidden = nodes.find(n => childNodeIds.has(n.id))?.hidden;
+      const targetHiddenState = !isFirstChildHidden;
+
+      setNodes((nds) => nds.map(n => 
+        childNodeIds.has(n.id) ? { ...n, hidden: targetHiddenState } : n
+      ));
+      
+      setEdges((eds) => eds.map(e => 
+        // Toggle edges that connect to any of the child nodes.
+        // We explicitly avoid toggling the user-to-user spine edge since the next user node is not a child.
+        (childNodeIds.has(e.target) || childNodeIds.has(e.source)) 
+          ? { ...e, hidden: targetHiddenState } 
+          : e
+      ));
+    }
+  }, [onNodeClick, nodes, setNodes, setEdges]);
 
   return (
     <div className="absolute inset-0">
@@ -73,6 +94,7 @@ function MemoryGraphInner({ nodesData, edgesData, onNodeClick, focusNodeId }: Me
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
         onNodeClick={handleNodeClick}
+        onPaneClick={onPaneClick}
         nodeTypes={nodeTypes}
         fitView
         colorMode="dark"
